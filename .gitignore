@@ -1,3 +1,8 @@
 **/obj
 **/bin
 /.ionide
+
+# Paket
+/.paket
+/paket-files
+/packages

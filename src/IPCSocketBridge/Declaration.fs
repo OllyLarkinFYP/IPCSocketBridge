@@ -1,6 +1,7 @@
 namespace IPCSocketBridge
 
 open System.Reflection
+open Newtonsoft.Json
 
 module Declaration =
     type InternalDeclarationElement = {
@@ -37,3 +38,6 @@ module Declaration =
             ReturnType = dec.ReturnType
             Parameters = dec.Parameters
         }
+
+    let serializeDeclaration (dec: ExternalDeclaration) =
+        JsonConvert.SerializeObject(dec)

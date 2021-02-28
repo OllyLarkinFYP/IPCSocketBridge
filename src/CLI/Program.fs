@@ -16,4 +16,8 @@ let main argv =
 
     let externDec = Declaration.exportDeclaration declaration
     printfn "%A" externDec
+
+    printfn "%s" "***********************************"
+    let serialized = Declaration.serializeDeclaration externDec
+    printfn "%s" serialized
     0 // return an integer exit code
