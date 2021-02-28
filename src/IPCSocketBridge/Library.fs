@@ -12,4 +12,9 @@ module CollectMethods =
             method.GetCustomAttribute<IPCMethodAttribute>()
             |> Utils.nullableToOption
             |> Option.map (fun attr -> attr.Name, method))
-        |> Map.ofSeq
+        |> Seq.map (fun (name, method) -> 
+            if method.IsGenericMethod || method.ContainsGenericParameters
+            then failwithf "Cannot export generics for IPC: %s, %A" name method     // TODO: make error message better
+            else name, method
+            )
+        |> Declaration.generateDeclaration

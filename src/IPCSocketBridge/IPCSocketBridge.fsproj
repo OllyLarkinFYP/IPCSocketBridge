@@ -4,6 +4,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Utils/Utils.fs" />
+    <Compile Include="Declaration.fs" />
     <Compile Include="IPCMethodAttribute.fs" />
     <Compile Include="Library.fs" />
   </ItemGroup>
