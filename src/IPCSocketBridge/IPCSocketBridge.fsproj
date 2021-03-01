@@ -6,7 +6,7 @@
   <ItemGroup>
     <Compile Include="IPCMethodAttribute.fs" />
     <Compile Include="Utils/Utils.fs" />
-    <Compile Include="Library.fs" />
+    <Compile Include="Declaration.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
