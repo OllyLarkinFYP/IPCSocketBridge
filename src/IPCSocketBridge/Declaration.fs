@@ -40,7 +40,20 @@ module Declaration =
                 Method = method
             })
 
+    let private validateIPCMethod () =
+        let mutable names = List.empty
+        fun (name, (method: MethodInfo)) ->
+            if method.IsGenericMethod || method.ContainsGenericParameters
+            then failwithf "Generics are currently not supported for IPC methods: %s, %A" name method
+            
+            if List.contains name names
+            then failwithf "IPC method names must be unique. '%s' was found multiple times. Use the format [<IPCMethod(\"example\")>] to use a different name." name
+            else names <- name::names
+
+            name, method
+
     let private getDeclaration () =
+        let validator = validateIPCMethod()
         AppDomain.CurrentDomain.GetAssemblies()
         |> Seq.collect (fun assembly -> assembly.GetTypes())
         |> Seq.collect (fun typ -> typ.GetMethods())
@@ -48,11 +61,7 @@ module Declaration =
             method.GetCustomAttribute<IPCMethodAttribute>()
             |> nullableToOption
             |> Option.map (fun attr -> attr.Name, method))
-        |> Seq.map (fun (name, method) -> 
-            if method.IsGenericMethod || method.ContainsGenericParameters
-            then failwithf "Cannot export generics for IPC: %s, %A" name method     // TODO: make error message better
-            else name, method
-            )
+        |> Seq.map validator
         |> generateDeclaration
 
     let private exportDeclaration : InternalDeclaration -> ExternalDeclaration =
