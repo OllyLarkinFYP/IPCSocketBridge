@@ -26,6 +26,15 @@ let rec parseArgs =
             |> JsonConvert.DeserializeObject<ExternalDeclaration>
         let decManager = DeclarationManager(dec)
         parseArgs lst
+    | "--execute"::path::lst ->
+        let dec = 
+            File.ReadAllText(path)
+            |> JsonConvert.DeserializeObject<ExternalDeclaration>
+        let decManager = DeclarationManager(dec)
+        let method = "yummy"
+        let parameters = [box 1; box 2] |> List.toArray
+        decManager.Execute method parameters |> printfn "%A"
+        parseArgs lst
     | _ -> printfn "%s" help
 
 [<EntryPoint>]
