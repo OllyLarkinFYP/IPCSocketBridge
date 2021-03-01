@@ -6,20 +6,20 @@ open System.IO
 open Newtonsoft.Json
 
 module Declaration =
-    type private InternalDeclarationElement = {
+    type InternalDeclarationElement = {
         Name: string
         ReturnType: string
         Parameters: {| Name: string; Type: string |} seq
         Method: MethodInfo
     }
-    type private InternalDeclaration = InternalDeclarationElement seq
+    type InternalDeclaration = InternalDeclarationElement seq
 
-    type private ExternalDeclarationElement = {
+    type ExternalDeclarationElement = {
         Name: string
         ReturnType: string
         Parameters: {| Name: string; Type: string |} seq
     }
-    type private ExternalDeclaration = ExternalDeclarationElement seq
+    type ExternalDeclaration = ExternalDeclarationElement seq
 
     let private generateDeclaration (methods: (string * MethodInfo) seq) : InternalDeclaration =
         methods

@@ -5,4 +5,3 @@ module Utils =
         match box a with
         | null -> None
         | _ -> Some a
-        
