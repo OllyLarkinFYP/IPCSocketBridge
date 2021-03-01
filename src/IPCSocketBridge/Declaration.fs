@@ -59,7 +59,8 @@ module Declaration =
             method.GetCustomAttribute<IPCMethodAttribute>()
             |> nullableToOption
             |> Option.map (fun attr -> attr.Name, method))
-        |> Seq.map validator
+        |> List.ofSeq
+        |> List.map validator
         |> generateDeclaration
 
     let private exportDeclaration : InternalDeclaration -> ExternalDeclaration =
@@ -107,4 +108,10 @@ module Declaration =
         do
             inDec <- getDeclaration()
             validateDeclaration ()
- 
+
+        member this.Execute (methodName: string) (paramArr: obj []): obj =
+            inDec
+            |> Seq.tryFind (fun method -> method.Name = methodName)
+            |> function
+            | None -> failwithf "Method '%s' execution was attempted, but this method does not exist." methodName
+            | Some method -> method.Method.Invoke(null, paramArr)
