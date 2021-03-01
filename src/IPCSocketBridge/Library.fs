@@ -2,9 +2,39 @@
 
 open System
 open System.Reflection
+open System.IO
+open Newtonsoft.Json
 
-module CollectMethods =
-    let getMethods () =
+module Declaration =
+    type private InternalDeclarationElement = {
+        Name: string
+        ReturnType: string
+        Parameters: {| Name: string; Type: string |} seq
+        Method: MethodInfo
+    }
+    type private InternalDeclaration = InternalDeclarationElement seq
+
+    type private ExternalDeclarationElement = {
+        Name: string
+        ReturnType: string
+        Parameters: {| Name: string; Type: string |} seq
+    }
+    type private ExternalDeclaration = ExternalDeclarationElement seq
+
+    let private generateDeclaration (methods: (string * MethodInfo) seq) : InternalDeclaration =
+        methods
+        |> Seq.map (fun (name, method) -> 
+            let parameters = 
+                method.GetParameters()
+                |> Seq.map (fun param -> {| Name = param.Name; Type = param.ParameterType.ToString()|})
+            {
+                Name = name
+                ReturnType = method.ReturnType.ToString()
+                Parameters = parameters
+                Method = method
+            })
+
+    let private getDeclaration () =
         AppDomain.CurrentDomain.GetAssemblies()
         |> Seq.collect (fun assembly -> assembly.GetTypes())
         |> Seq.collect (fun typ -> typ.GetMethods())
@@ -17,4 +47,22 @@ module CollectMethods =
             then failwithf "Cannot export generics for IPC: %s, %A" name method     // TODO: make error message better
             else name, method
             )
-        |> Declaration.generateDeclaration
+        |> generateDeclaration
+
+    let private exportDeclaration : InternalDeclaration -> ExternalDeclaration =
+        Seq.map <| fun dec -> {
+            Name = dec.Name
+            ReturnType = dec.ReturnType
+            Parameters = dec.Parameters
+        }
+
+    let private serialize (dec: ExternalDeclaration) =
+        JsonConvert.SerializeObject(dec)
+            
+    let export (path: string) =
+        let json =
+            getDeclaration()
+            |> exportDeclaration
+            |> serialize
+        File.WriteAllText(Path.Combine(path, "ipc.declaration.json"), json)
+

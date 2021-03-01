@@ -6,3 +6,6 @@
 /.paket
 /paket-files
 /packages
+
+# Tempory files
+/tmp
