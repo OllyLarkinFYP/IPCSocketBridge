@@ -1,5 +1,8 @@
 open System
 open IPCSocketBridge
+open IPCSocketBridge.Declaration
+open System.IO
+open Newtonsoft.Json
 
 [<IPCMethod("yummy")>]
 let testFunc a b = a + b
@@ -15,7 +18,13 @@ let rec parseArgs =
     function
     | [] -> ()
     | "--export"::path::lst -> 
-        Declaration.export path
+        export path
+        parseArgs lst
+    | "--validate"::path::lst ->
+        let dec = 
+            File.ReadAllText(path)
+            |> JsonConvert.DeserializeObject<ExternalDeclaration>
+        let decManager = DeclarationManager(dec)
         parseArgs lst
     | _ -> printfn "%s" help
 

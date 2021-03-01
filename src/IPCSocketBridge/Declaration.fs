@@ -4,6 +4,7 @@ open System
 open System.Reflection
 open System.IO
 open Newtonsoft.Json
+open Utils
 
 module Declaration =
     type InternalDeclarationElement = {
@@ -20,6 +21,11 @@ module Declaration =
         Parameters: {| Name: string; Type: string |} seq
     }
     type ExternalDeclaration = ExternalDeclarationElement seq
+
+    let equalDecsElem (inDecElem: InternalDeclarationElement) (exDecElem: ExternalDeclarationElement) =
+        inDecElem.Name = exDecElem.Name
+        && seqCompare inDecElem.Parameters exDecElem.Parameters
+        && inDecElem.ReturnType = exDecElem.ReturnType
 
     let private generateDeclaration (methods: (string * MethodInfo) seq) : InternalDeclaration =
         methods
@@ -40,7 +46,7 @@ module Declaration =
         |> Seq.collect (fun typ -> typ.GetMethods())
         |> Seq.choose (fun method ->
             method.GetCustomAttribute<IPCMethodAttribute>()
-            |> Utils.nullableToOption
+            |> nullableToOption
             |> Option.map (fun attr -> attr.Name, method))
         |> Seq.map (fun (name, method) -> 
             if method.IsGenericMethod || method.ContainsGenericParameters
@@ -66,3 +72,32 @@ module Declaration =
             |> serialize
         File.WriteAllText(Path.Combine(path, "ipc.declaration.json"), json)
 
+    type DeclarationManager (dec: ExternalDeclaration) =
+        let exDec = dec
+        let mutable inDec: InternalDeclaration = Seq.empty
+
+        let validateDeclaration () = 
+            inDec
+            |> Seq.toList
+            |> List.map (fun inFunc ->
+                exDec
+                |> Seq.exists (fun exFunc -> equalDecsElem inFunc exFunc)
+                |> function
+                | true -> ()
+                | false -> failwithf "The method with name '%s' was exported as an IPCMethod, but a matching signature cannot be found in the specified declaration. This suggests that the declaration file was not generated from the current build. Please re-generate the declaration file." inFunc.Name)
+            |> ignore
+
+            exDec
+            |> Seq.toList
+            |> List.map (fun exFunc ->
+                inDec
+                |> Seq.exists (fun inFunc -> equalDecsElem inFunc exFunc)
+                |> function
+                | true -> ()
+                | false -> failwithf "The method with name '%s' was found in the specified declaration, but a matching signature cannot be found in this project. This suggests that the declaration file was not generated from the current build. Please re-generate the declaration file." exFunc.Name)
+            |> ignore
+        
+        do
+            inDec <- getDeclaration()
+            validateDeclaration ()
+ 

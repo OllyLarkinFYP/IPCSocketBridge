@@ -1,5 +1,7 @@
 namespace IPCSocketBridge
 
+open System
+
 module Utils =
     let nullableToOption a =
         match box a with
@@ -9,3 +11,6 @@ module Utils =
     let tee a =
         printfn "%A" a
         a
+
+    let seqCompare a b =
+        Seq.fold (&&) true (Seq.zip a b |> Seq.map (fun (aa,bb) -> aa=bb))
