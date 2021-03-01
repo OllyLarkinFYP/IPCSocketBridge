@@ -39,5 +39,5 @@ module Declaration =
             Parameters = dec.Parameters
         }
 
-    let serializeDeclaration (dec: ExternalDeclaration) =
+    let serialize (dec: ExternalDeclaration) =
         JsonConvert.SerializeObject(dec)
