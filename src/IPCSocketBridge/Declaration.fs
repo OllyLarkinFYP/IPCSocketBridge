@@ -40,9 +40,9 @@ module Declaration =
                 Method = method
             })
 
-    let private validateIPCMethod () =
+    let private getDeclaration () =
         let mutable names = List.empty
-        fun (name, (method: MethodInfo)) ->
+        let validator (name, (method: MethodInfo)) =
             if method.IsGenericMethod || method.ContainsGenericParameters
             then failwithf "Generics are currently not supported for IPC methods: %s, %A" name method
             
@@ -52,8 +52,6 @@ module Declaration =
 
             name, method
 
-    let private getDeclaration () =
-        let validator = validateIPCMethod()
         AppDomain.CurrentDomain.GetAssemblies()
         |> Seq.collect (fun assembly -> assembly.GetTypes())
         |> Seq.collect (fun typ -> typ.GetMethods())
