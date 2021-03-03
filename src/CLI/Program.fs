@@ -14,7 +14,8 @@ let help =
     "Invalid arguments passed. Correct usage is:
     dotnet run --export $DIR_PATH
     dotnet run --validate $DEC_PATH
-    dotnet run --execute $DEC_PATH"
+    dotnet run --execute $DEC_PATH
+    dotnet run $DEC_PATH --connect $PORT"
 
 let rec parseArgsRec =
     function
@@ -37,6 +38,15 @@ let rec parseArgsRec =
         let parameters = [box 1; box 2] |> List.toArray
         decManager.Execute method parameters |> printfn "%A"
         parseArgsRec lst
+    | path::"--connect"::port::lst ->
+        let p = int port
+        let dec = 
+            File.ReadAllText(path)
+            |> JsonConvert.DeserializeObject<ExternalDeclaration>
+        let ipcManager = IPC.IPCManager(p, dec)
+        ipcManager.Start()
+        parseArgsRec lst
+        
     | _ -> printfn "%s" help
 
 let parseArgs =
