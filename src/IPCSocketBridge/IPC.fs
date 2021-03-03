@@ -5,6 +5,7 @@ open System.Net
 open System.Net.Sockets
 open Declaration
 open Newtonsoft.Json
+open Newtonsoft.Json.Linq
 
 module IPC =
 
@@ -16,14 +17,26 @@ module IPC =
         Name: string
 
         [<JsonProperty(Required = Required.Always)>]
-        Parameters: obj[]
+        Parameters: JArray 
     }
 
     type IPCManager (port: int, dec: ExternalDeclaration) =
         let decManager = DeclarationManager(dec)
 
         let parseAndExecute (dec: ExternalDeclaration) (message: byte[]) =
-            printfn "[IPC] Message to parse:\n%A" <| System.Text.Encoding.ASCII.GetString message
+            let messageStr = System.Text.Encoding.ASCII.GetString message
+            printfn "[IPC] Message to parse:\n%A" messageStr
+            let recObj = JsonConvert.DeserializeObject<IncomingMessage>(messageStr)
+            printfn "[IPC] Parsed object:\n%A" recObj
+
+            recObj.Parameters
+            |> decManager.ParseParams recObj.Name
+            |> function
+            | Error err -> failwithf "parsing failed: %s" err
+            | Ok x -> 
+                x
+                |> decManager.Execute recObj.Name
+                |> printfn "[IPC] Function call return: %A"
 
         let rec receiveExactRec (socket: Socket) buff offset size =
             let numReceieved = socket.Receive(buff, offset, size, SocketFlags.None)
@@ -52,10 +65,13 @@ module IPC =
             printfn "[IPC] Waiting for incoming message..."
 
             while socket.Connected do
-                // Message size should correspond to the number of bytes in the following message
-                getMessageSize socket
-                |> receive socket
-                |> parseAndExecute dec
+                try
+                    // Message size should correspond to the number of bytes in the following message
+                    getMessageSize socket
+                    |> receive socket
+                    |> parseAndExecute dec
+                with
+                | :? SocketException as ex -> printfn "[IPC] Socket Exception: %s" ex.Message
             
             printfn "[IPC] Disconnected"
 

@@ -4,6 +4,7 @@
     <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="IPCTypeAttribute.fs" />
     <Compile Include="IPCMethodAttribute.fs" />
     <Compile Include="Utils/Utils.fs" />
     <Compile Include="Declaration.fs" />

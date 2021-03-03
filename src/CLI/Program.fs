@@ -10,6 +10,16 @@ let testFunc a b = a + b
 [<IPCMethod>]
 let testFunc2 a b = a + b
 
+type TestType = {
+    Name: string
+    Height: double
+    Clapped: bool
+}
+
+[<IPCMethod>]
+let clappedMethod (person: TestType) =
+    printfn "name: %s, height: %f, clapped: %b" person.Name person.Height person.Clapped
+
 let help =
     "Invalid arguments passed. Correct usage is:
     dotnet run --export $DIR_PATH

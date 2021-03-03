@@ -4,13 +4,24 @@ open System
 open System.Reflection
 open System.IO
 open Newtonsoft.Json
+open Newtonsoft.Json.Linq
 open Utils
 
 module Declaration =
+    type InternalParam = {
+        Name: string
+        Type: System.Type
+    }
+
+    type ExternalParam = {
+        Name: string
+        Type: string
+    }
+
     type InternalDeclarationElement = {
         Name: string
-        ReturnType: string
-        Parameters: {| Name: string; Type: string |} seq
+        ReturnType: System.Type
+        Parameters: InternalParam seq
         Method: MethodInfo
     }
     type InternalDeclaration = InternalDeclarationElement seq
@@ -18,24 +29,29 @@ module Declaration =
     type ExternalDeclarationElement = {
         Name: string
         ReturnType: string
-        Parameters: {| Name: string; Type: string |} seq
+        Parameters: ExternalParam seq
     }
     type ExternalDeclaration = ExternalDeclarationElement seq
 
+    let convertParams = Seq.map (fun (p: InternalParam) -> {
+            ExternalParam.Name=p.Name
+            Type=p.Type.ToString()
+        })
+
     let equalDecsElem (inDecElem: InternalDeclarationElement) (exDecElem: ExternalDeclarationElement) =
         inDecElem.Name = exDecElem.Name
-        && seqCompare inDecElem.Parameters exDecElem.Parameters
-        && inDecElem.ReturnType = exDecElem.ReturnType
+        && seqCompare (convertParams inDecElem.Parameters) exDecElem.Parameters
+        && inDecElem.ReturnType.ToString() = exDecElem.ReturnType
 
     let private generateDeclaration (methods: (string * MethodInfo) seq) : InternalDeclaration =
         methods
         |> Seq.map (fun (name, method) -> 
             let parameters = 
                 method.GetParameters()
-                |> Seq.map (fun param -> {| Name = param.Name; Type = param.ParameterType.ToString()|})
+                |> Seq.map (fun param -> { InternalParam.Name = param.Name; Type = param.ParameterType })
             {
                 Name = name
-                ReturnType = method.ReturnType.ToString()
+                ReturnType = method.ReturnType
                 Parameters = parameters
                 Method = method
             })
@@ -66,8 +82,8 @@ module Declaration =
     let private exportDeclaration : InternalDeclaration -> ExternalDeclaration =
         Seq.map <| fun dec -> {
             Name = dec.Name
-            ReturnType = dec.ReturnType
-            Parameters = dec.Parameters
+            ReturnType = dec.ReturnType.ToString()
+            Parameters = convertParams dec.Parameters
         }
 
     let private serialize (dec: ExternalDeclaration) =
@@ -115,3 +131,23 @@ module Declaration =
             |> function
             | None -> failwithf "Method '%s' execution was attempted, but this method does not exist." methodName
             | Some method -> method.Method.Invoke(null, paramArr)
+
+        member this.ParseParams (methodName: string) (parameters: JArray) : Result<obj[],string> =
+            try
+                inDec 
+                |> Seq.tryFind (fun m -> m.Name = methodName)
+                |> function
+                | None -> Error <| sprintf "Could not find specified method: %s" methodName
+                | Some method ->
+                    if Seq.length method.Parameters <> parameters.Count
+                    then Error <| sprintf "Wrong number of parameters provided. This method expects %i, but got %i" (Seq.length method.Parameters) parameters.Count
+                    else 
+                        (method.Parameters, parameters)
+                        ||> Seq.zip
+                        |> Seq.map (fun (paramInfo, jToken) ->
+                            jToken.ToObject paramInfo.Type
+                            |> box)
+                        |> Seq.toArray
+                        |> Ok
+            with
+            | e -> Error <| sprintf "Unable to parse the parameter to the correct types: %s" e.Message  // TODO: maybe do more analysis
