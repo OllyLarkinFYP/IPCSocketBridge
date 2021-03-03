@@ -12,7 +12,9 @@ let testFunc2 a b = a + b
 
 let help =
     "Invalid arguments passed. Correct usage is:
-    dotnet run --export $DIR_PATH"
+    dotnet run --export $DIR_PATH
+    dotnet run --validate $DEC_PATH
+    dotnet run --execute $DEC_PATH"
 
 let rec parseArgs =
     function
