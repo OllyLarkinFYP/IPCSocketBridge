@@ -16,18 +16,18 @@ let help =
     dotnet run --validate $DEC_PATH
     dotnet run --execute $DEC_PATH"
 
-let rec parseArgs =
+let rec parseArgsRec =
     function
     | [] -> ()
     | "--export"::path::lst -> 
         export path
-        parseArgs lst
+        parseArgsRec lst
     | "--validate"::path::lst ->
         let dec = 
             File.ReadAllText(path)
             |> JsonConvert.DeserializeObject<ExternalDeclaration>
         let decManager = DeclarationManager(dec)
-        parseArgs lst
+        parseArgsRec lst
     | "--execute"::path::lst ->
         let dec = 
             File.ReadAllText(path)
@@ -36,8 +36,13 @@ let rec parseArgs =
         let method = "yummy"
         let parameters = [box 1; box 2] |> List.toArray
         decManager.Execute method parameters |> printfn "%A"
-        parseArgs lst
+        parseArgsRec lst
     | _ -> printfn "%s" help
+
+let parseArgs =
+    function
+    | [] -> printfn "%s" help
+    | lst -> parseArgsRec lst 
 
 [<EntryPoint>]
 let main argv =
