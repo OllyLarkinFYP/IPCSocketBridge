@@ -8,4 +8,3 @@ open System.Runtime.InteropServices
 type IPCMethodAttribute([<CallerMemberName; Optional; DefaultParameterValue("")>]name: string) = 
     inherit Attribute()
     member this.Name = name
- 
