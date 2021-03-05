@@ -1,6 +1,6 @@
 name: publish to nuget
 on:
-    pull-request:
+    push:
         branches:
             - master # Default release branch
 
