@@ -1,6 +1,7 @@
 **/obj
 **/bin
 /.ionide
+/.vs
 
 # Paket
 /.paket

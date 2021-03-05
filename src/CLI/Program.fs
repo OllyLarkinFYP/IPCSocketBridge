@@ -50,10 +50,7 @@ let rec parseArgsRec =
         parseArgsRec lst
     | path::"--connect"::port::lst ->
         let p = int port
-        let dec = 
-            File.ReadAllText(path)
-            |> JsonConvert.DeserializeObject<ExternalDeclaration>
-        let ipcManager = IPC.IPCManager(p, dec)
+        let ipcManager = IPC.IPCManager(p, path)
         ipcManager.Start()
         parseArgsRec lst
         

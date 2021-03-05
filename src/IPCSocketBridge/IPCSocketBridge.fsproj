@@ -2,6 +2,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
+    <Authors>Olly Larkin</Authors>
+    <Company />
+    <PackageId>IPCSocketBridge</PackageId>
+    <RepositoryUrl>https://github.com/OllyLarkinFYP/IPCSocketBridge/tree/main/src/IPCSocketBridge</RepositoryUrl>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="IPCTypeAttribute.fs" />
